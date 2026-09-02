@@ -1,0 +1,296 @@
+// ============================================================================
+// CRM – Prisma schema
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum LeadStatus {
+  // Nový 8stavový obchodní pipeline (2026-08) - "Stav = kde obchod je",
+  // odděleně od pole nextAction ("Další akce = co má obchodník udělat").
+  NEW           // Nový
+  TO_CONTACT    // Kontaktovat
+  CONTACTED     // Kontaktováno
+  INTERESTED    // Zájem
+  PROPOSAL      // Nabídka
+  NEGOTIATION   // Jednání
+  WON           // Vyhráno (dřív "Prodáno" - řídí provize a kariérní úrovně)
+  LOST          // Prohráno (dřív "Odmítnuto")
+
+  // DEPRECATED - staré 4 hodnoty, ponechané dočasně jen kvůli bezpečné
+  // dvoufázové migraci existujících dat (viz prisma/migrate-lead-status-pipeline.ts).
+  // Po úspěšném proběhnutí migračního skriptu na produkci se v samostatném
+  // commitu odstraní.
+  IN_PROGRESS       // V procesu (starý)
+  MEETING_SCHEDULED // Domluvená schůzka (starý)
+  SOLD              // Prodáno (starý)
+  REJECTED          // Odmítnuto (starý)
+}
+
+enum NextActionType {
+  CALL          // Zavolat
+  EMAIL         // Poslat e-mail
+  FOLLOW_UP     // Follow-up
+  SEND_PROPOSAL // Připravit nabídku
+  MEETING       // Schůzka
+  WAITING       // Čekám na odpověď
+}
+
+enum CommissionType {
+  FIXED_PER_SALE // fixní částka za prodej
+  PERCENTAGE     // procento z hodnoty obchodu
+}
+
+enum TargetPeriod {
+  WEEKLY
+  MONTHLY
+}
+
+enum TargetMetric {
+  CONTACTS
+  MEETINGS
+  SALES
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  MEETING_TODAY
+  MEETING_TOMORROW
+  LEAD_STALE
+  LEAD_ASSIGNED
+  TARGET_AT_RISK
+}
+
+enum LeadHistoryAction {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNED
+  NOTE_ADDED
+  CONTACTED
+  MEETING_BOOKED
+  MEETING_CANCELLED
+  FIELD_UPDATED
+  NEXT_ACTION_SET
+}
+
+// ----------------------------------------------------------------------------
+// User (Admin i Agent jsou stejná entita, odlišené rolí)
+// ----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role     @default(AGENT)
+  isActive     Boolean  @default(true)
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Obchodní nastavení (relevantní jen pro AGENT, ale drženo na Useru kvůli 1:1)
+  commissionConfig CommissionConfig?
+  targets          Target[]
+
+  // Vztahy
+  assignedLeads   Lead[]            @relation("AssignedAgent")
+  leadHistory     LeadHistory[]     @relation("HistoryActor")
+  meetings        Meeting[]         @relation("AgentMeetings")
+  notifications   Notification[]
+  refreshTokens   RefreshToken[]
+  calendarIntegration CalendarIntegration?
+
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ----------------------------------------------------------------------------
+// Google Calendar integrace (vlastník kalendáře = admin/firma)
+// ----------------------------------------------------------------------------
+
+model CalendarIntegration {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  googleEmail   String
+  refreshToken  String   // šifrovaný refresh token (encrypted at rest v service vrstvě)
+  accessToken   String?
+  accessTokenExpiresAt DateTime?
+  calendarId    String   @default("primary")
+  workingHourStart Int   @default(9)  // 9:00
+  workingHourEnd   Int   @default(17) // 17:00
+  slotDurationMin  Int   @default(30)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("calendar_integrations")
+}
+
+// ----------------------------------------------------------------------------
+// Lead
+// ----------------------------------------------------------------------------
+
+model Lead {
+  id               String     @id @default(uuid())
+  firstName        String
+  lastName         String
+  phone            String
+  email            String?    // nepovinný - automatizace u části kandidátů dohledá jen telefon
+  company          String?
+  notes            String?    // interní poznámky – viditelné jen obchodníkům/adminovi
+  oldWebsiteUrl    String?    // odkaz na starý web klienta (dřív "zdroj")
+  autoImported     Boolean    @default(false) // true = přišel z noční research automatizace (zobrazí se jako "Nové", dokud ho někdo nekontaktuje)
+  isPrivate        Boolean    @default(false) // true = soukromý kontakt majitele účtu, neviditelný pro obchodníky ani jiné adminy
+  status           LeadStatus     @default(NEW)
+  dealValue        Decimal?       @db.Decimal(12, 2) // hodnota obchodu (vyplní se při výhře)
+  nextAction       NextActionType? // co má obchodník udělat dál (odděleně od stavu obchodu)
+  nextActionDueDate DateTime?      // kdy má "další akci" udělat
+
+  assignedAgentId  String?
+  assignedAgent    User?      @relation("AssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime   @default(now())
+  lastContactedAt  DateTime?
+  soldAt           DateTime?  // datum výhry (WON) - název pole zůstává kvůli minimalizaci rizika migrace
+  rejectedAt       DateTime?  // datum prohry (LOST) - název pole zůstává kvůli minimalizaci rizika migrace
+  updatedAt        DateTime   @updatedAt
+
+  history          LeadHistory[]
+  meetings         Meeting[]
+
+  @@index([assignedAgentId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model LeadHistory {
+  id        String            @id @default(uuid())
+  leadId    String
+  lead      Lead              @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?             @relation("HistoryActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action    LeadHistoryAction
+  fromValue String?
+  toValue   String?
+  note      String?
+  createdAt DateTime          @default(now())
+
+  @@index([leadId])
+  @@map("lead_history")
+}
+
+// ----------------------------------------------------------------------------
+// Meetings (schůzky provázané s Google Calendar)
+// ----------------------------------------------------------------------------
+
+model Meeting {
+  id              String        @id @default(uuid())
+  leadId          String
+  lead            Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  agentId         String?
+  agent           User?         @relation("AgentMeetings", fields: [agentId], references: [id], onDelete: SetNull)
+  googleEventId   String?
+  startTime       DateTime
+  endTime         DateTime
+  status          MeetingStatus @default(SCHEDULED)
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([agentId, startTime])
+  @@index([leadId])
+  @@map("meetings")
+}
+
+// ----------------------------------------------------------------------------
+// Provizní systém
+// ----------------------------------------------------------------------------
+
+model CommissionConfig {
+  id             String         @id @default(uuid())
+  userId         String         @unique
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           CommissionType @default(PERCENTAGE)
+  fixedAmount    Decimal?       @db.Decimal(12, 2) // pro FIXED_PER_SALE
+  percentage     Decimal?       @db.Decimal(5, 2)  // pro PERCENTAGE, např. 8.50 (%)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@map("commission_configs")
+}
+
+// ----------------------------------------------------------------------------
+// Cíle obchodníků
+// ----------------------------------------------------------------------------
+
+model Target {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  period    TargetPeriod
+  metric    TargetMetric
+  value     Int          // požadovaná hodnota (např. 100 hovorů, 15 schůzek, 5 prodejů)
+  validFrom DateTime     @default(now())
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([userId, period, metric])
+  @@map("targets")
+}
+
+// ----------------------------------------------------------------------------
+// Notifikace
+// ----------------------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  relatedLeadId    String?
+  relatedMeetingId String?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
