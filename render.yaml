@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: crm-delta-backend
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: npm install && npm run prisma:generate && npm run build
+    startCommand: npm run prisma:migrate:deploy && npm run start:prod
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: 4000
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        value: 5235707fad211e996d870b671e8b616a63f5f91eba7d2e0402e8724f9718bd0a
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_SECRET
+        value: 5aad9556d74b43208b96fb121f5a444bb2138d0c93148f992167bc38e71815d4
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: ENCRYPTION_KEY
+        value: 744c436cd4d509f070c8a3c17e845b4f
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+
+  - type: web
+    name: crm-delta-frontend
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
