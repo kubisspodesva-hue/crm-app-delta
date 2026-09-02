@@ -66,9 +66,9 @@ export function Sidebar() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="h-8 w-8 rounded-none bg-brand-600 text-white flex items-center justify-center font-bold mr-2">
-                C
+                D
               </div>
-              <span className="font-semibold text-white tracking-tight">CRM Obchod</span>
+              <span className="font-semibold text-white tracking-tight">CRM Delta</span>
             </div>
             <button
               onClick={close}

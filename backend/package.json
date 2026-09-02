@@ -17,11 +17,6 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:push": "prisma db push --accept-data-loss",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "rename-admin": "ts-node prisma/rename-admin.ts",
-    "rename-agents": "ts-node prisma/rename-agents.ts",
-    "import-contacts": "ts-node prisma/import-contacts.ts",
-    "backfill-old-website": "ts-node prisma/backfill-old-website.ts",
-    "set-august-targets": "ts-node prisma/set-august-targets.ts",
     "migrate-lead-status-pipeline": "ts-node prisma/migrate-lead-status-pipeline.ts",
     "prisma:studio": "prisma studio"
   },

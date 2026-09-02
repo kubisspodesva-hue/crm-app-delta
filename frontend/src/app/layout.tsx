@@ -8,8 +8,8 @@ import './globals.css';
 // systémový sans-serif (San Francisco / Segoe UI / Roboto) velmi blízký Interu.
 
 export const metadata: Metadata = {
-  title: 'CRM | Obchodní tým',
-  description: 'CRM pro správu leadů, schůzek, výkonu a provizí obchodního týmu',
+  title: 'CRM Delta | Obchodní tým',
+  description: 'CRM pro správu leadů, schůzek, výkonu a provizí obchodního týmu - Delta',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'CRM',
+    title: 'CRM Delta',
   },
 };
 

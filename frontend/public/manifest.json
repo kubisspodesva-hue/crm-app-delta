@@ -1,7 +1,7 @@
 {
-  "name": "CRM Obchodní tým",
-  "short_name": "CRM",
-  "description": "Správa leadů, schůzek, výkonu a provizí obchodního týmu",
+  "name": "CRM Delta",
+  "short_name": "CRM Delta",
+  "description": "Správa leadů, schůzek, výkonu a provizí obchodního týmu - Delta",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

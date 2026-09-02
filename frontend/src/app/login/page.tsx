@@ -32,7 +32,7 @@ export default function LoginPage() {
             C
           </div>
           <div className="pipeline-stripe w-24 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Přihlášení do CRM</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Přihlášení do CRM Delta</h1>
           <p className="text-sm text-slate-500 mt-1">Zadejte své přihlašovací údaje</p>
         </div>
 
