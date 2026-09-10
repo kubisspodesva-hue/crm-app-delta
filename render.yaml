@@ -6,7 +6,7 @@ services:
     region: frankfurt
     rootDir: backend
     buildCommand: npm install --include=dev && npm run prisma:generate && npm run build
-    startCommand: npm run prisma:migrate:deploy && npm run start:prod
+    startCommand: npm run prisma:push && npm run prisma:seed && npm run start:prod
     envVars:
       - key: DATABASE_URL
         sync: false
