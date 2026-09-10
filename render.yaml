@@ -5,7 +5,7 @@ services:
     plan: free
     region: frankfurt
     rootDir: backend
-    buildCommand: npm install && npm run prisma:generate && npm run build
+    buildCommand: npm install --include=dev && npm run prisma:generate && npm run build
     startCommand: npm run prisma:migrate:deploy && npm run start:prod
     envVars:
       - key: DATABASE_URL
@@ -41,7 +41,7 @@ services:
     plan: free
     region: frankfurt
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     envVars:
       - key: NEXT_PUBLIC_API_URL
