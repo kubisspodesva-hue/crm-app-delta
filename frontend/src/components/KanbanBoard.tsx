@@ -58,19 +58,7 @@ export function KanbanBoard({ leads, onStatusChange, onAddLead }: KanbanBoardPro
             <span className={`badge ${LEAD_STATUS_STYLES[col.status]}`}>
               {LeadStatusLabels[col.status]}
             </span>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-muted tabular-nums">{col.leads.length}</span>
-              {col.status === 'NEW' && onAddLead && (
-                <button
-                  onClick={onAddLead}
-                  className="text-sm leading-none text-muted hover:text-ink px-1"
-                  title="Přidat nový lead"
-                  aria-label="Přidat nový lead"
-                >
-                  ➕
-                </button>
-              )}
-            </div>
+            <span className="text-xs text-muted tabular-nums shrink-0">{col.leads.length}</span>
           </div>
 
           <div className="p-2 space-y-2 min-h-[120px] max-h-[65vh] overflow-y-auto">
@@ -109,8 +97,16 @@ export function KanbanBoard({ leads, onStatusChange, onAddLead }: KanbanBoardPro
                 </div>
               );
             })}
-            {col.leads.length === 0 && (
+            {col.leads.length === 0 && !(col.status === 'NEW' && onAddLead) && (
               <p className="text-xs text-muted text-center py-6">Žádné leady</p>
+            )}
+            {col.status === 'NEW' && onAddLead && (
+              <button
+                onClick={onAddLead}
+                className="w-full border border-dashed border-hairline-strong text-sm text-muted hover:text-ink hover:border-brand-500 py-2.5 transition-colors"
+              >
+                + Přidat lead
+              </button>
             )}
           </div>
         </div>
