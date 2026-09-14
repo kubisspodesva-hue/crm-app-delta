@@ -481,6 +481,15 @@ export default function LeadsPage() {
                       status={lead.status}
                       onChange={(next) => handleStatusChange(lead, next)}
                     />
+                    {!LEAD_STATUS_PIPELINE.includes(lead.status) && (
+                      <button
+                        className="block mt-1 text-xs text-brand-500 hover:underline"
+                        onClick={() => handleStatusChange(lead, 'NEW')}
+                        title="Přesune lead do sloupce Nový v Kanbanu"
+                      >
+                        🗂️ Přidat do kanbanu
+                      </button>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <NextActionCell lead={lead} onSaved={load} />
