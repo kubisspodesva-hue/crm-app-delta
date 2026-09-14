@@ -9,6 +9,7 @@ import { computePriorityScore, getLastContactInfo, priorityColorClass } from '@/
 interface KanbanBoardProps {
   leads: Lead[];
   onStatusChange: (lead: Lead, nextStatus: LeadStatus) => void;
+  onAddLead?: () => void;
 }
 
 /**
@@ -18,7 +19,7 @@ interface KanbanBoardProps {
  * tabulce (včetně booking/sold modalů u NEGOTIATION a WON).
  * Nativní HTML5 drag & drop - žádná další závislost navíc.
  */
-export function KanbanBoard({ leads, onStatusChange }: KanbanBoardProps) {
+export function KanbanBoard({ leads, onStatusChange, onAddLead }: KanbanBoardProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<LeadStatus | null>(null);
 
@@ -53,11 +54,23 @@ export function KanbanBoard({ leads, onStatusChange }: KanbanBoardProps) {
               : 'border-hairline bg-surface-soft'
           }`}
         >
-          <div className="px-3 py-2.5 border-b border-hairline flex items-center justify-between">
+          <div className="px-3 py-2.5 border-b border-hairline flex items-center justify-between gap-2">
             <span className={`badge ${LEAD_STATUS_STYLES[col.status]}`}>
               {LeadStatusLabels[col.status]}
             </span>
-            <span className="text-xs text-muted tabular-nums">{col.leads.length}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs text-muted tabular-nums">{col.leads.length}</span>
+              {col.status === 'NEW' && onAddLead && (
+                <button
+                  onClick={onAddLead}
+                  className="text-sm leading-none text-muted hover:text-ink px-1"
+                  title="Přidat nový lead"
+                  aria-label="Přidat nový lead"
+                >
+                  ➕
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="p-2 space-y-2 min-h-[120px] max-h-[65vh] overflow-y-auto">

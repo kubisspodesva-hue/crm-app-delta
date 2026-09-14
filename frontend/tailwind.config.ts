@@ -5,6 +5,11 @@ function themeColor(name: string) {
 }
 
 const config: Config = {
+  // Umožňuje `dark:` variantu řízenou naším data-theme atributem (ne
+  // systémovým prefers-color-scheme) - používá se jen tam, kde potřebujeme
+  // odlišný odstín pevné (ne-tokenové) Tailwind barvy mezi motivy, např.
+  // barevné odznaky stavu leadu (LeadStatusBadge).
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {

@@ -386,7 +386,11 @@ export default function LeadsPage() {
         )}
 
         {view === 'kanban' && (
-          <KanbanBoard leads={data?.items ?? []} onStatusChange={handleStatusChange} />
+          <KanbanBoard
+            leads={data?.items ?? []}
+            onStatusChange={handleStatusChange}
+            onAddLead={() => setShowCreate(true)}
+          />
         )}
 
         {view === 'table' && (
@@ -423,8 +427,8 @@ export default function LeadsPage() {
                   key={lead.id}
                   className={
                     lead.status === 'WON' || lead.status === 'SOLD'
-                      ? 'bg-green-50 border-l-4 border-green-500 hover:bg-green-100'
-                      : 'hover:bg-slate-50'
+                      ? 'bg-emerald-50 border-l-4 border-emerald-500 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50'
+                      : 'hover:bg-surface-elevated'
                   }
                 >
                   {canSelect && (
