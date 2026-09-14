@@ -79,11 +79,15 @@ export default function LeadsPage() {
 
   function handleCheckboxPointerDown(id: string, e: React.PointerEvent) {
     if (e.pointerType !== 'mouse') return; // touch/pero necháme na nativním onChange
-    e.preventDefault(); // zabrání dvojímu přepnutí (pointerdown + následný click) a označování textu při tahu
-    const willSelect = !selected.has(id);
-    dragModeRef.current = willSelect;
+    // Jen si zapamatujeme směr tažení (vybrat/odškrtnout) - samotné přepnutí
+    // téhle konkrétní checkboxy necháváme na nativním click/onChange. Dřív se
+    // volalo i applySelection() rovnou tady s e.preventDefault() na pointerdown
+    // v naději, že to zabrání dvojímu přepnutí - jenže preventDefault na
+    // pointerdown u myši následný click nezastaví, takže se checkbox přepnul
+    // pointerdown handlerem A HNED PAK znovu native onChange handlerem zpátky,
+    // takže klik viditelně nic neudělal.
+    dragModeRef.current = !selected.has(id);
     isDraggingRef.current = true;
-    applySelection(id, willSelect);
   }
 
   function handleCheckboxPointerEnter(id: string, e: React.PointerEvent) {
