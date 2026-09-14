@@ -45,6 +45,7 @@ export default function LeadsPage() {
   const [soldLeadId, setSoldLeadId] = useState<string | null>(null);
   const [dueTodayOnly, setDueTodayOnly] = useState(false);
   const [view, setView] = useState<'table' | 'kanban'>('table');
+  const [addingToKanban, setAddingToKanban] = useState(false);
   const isAdmin = user?.role === 'ADMIN';
   const OWNER_EMAIL = 'admin@crm.cz';
   const canDelete = user?.email === OWNER_EMAIL;
@@ -151,6 +152,22 @@ export default function LeadsPage() {
       alert(err instanceof Error ? err.message : 'Smazání se nepovedlo');
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleBulkAddToKanban() {
+    if (selected.size === 0) return;
+    setAddingToKanban(true);
+    try {
+      await Promise.all(
+        Array.from(selected).map((id) => api.patch(`/leads/${id}/status`, { status: 'NEW' })),
+      );
+      setSelected(new Set());
+      await load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Přidání do kanbanu se nepovedlo');
+    } finally {
+      setAddingToKanban(false);
     }
   }
 
@@ -339,6 +356,9 @@ export default function LeadsPage() {
             <div className="flex flex-wrap items-center gap-2">
               <button className="btn-secondary" onClick={() => setSelected(new Set())}>
                 Zrušit výběr
+              </button>
+              <button className="btn-secondary" disabled={addingToKanban} onClick={handleBulkAddToKanban}>
+                {addingToKanban ? 'Přidávám…' : `🗂️ Přidat do kanbanu (${selected.size})`}
               </button>
               <select
                 className="input max-w-[200px]"
