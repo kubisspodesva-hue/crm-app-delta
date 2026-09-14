@@ -79,7 +79,7 @@ export class UsersController {
     return this.usersService.remove(id, user);
   }
 
-  // --- Provize a cíle (jen ADMIN nastavuje) ---
+  // --- Provize (jen ADMIN nastavuje) a cíle (ADMIN kohokoliv, AGENT jen svoje) ---
 
   @Roles(Role.ADMIN)
   @Post(':id/commission')
@@ -87,9 +87,16 @@ export class UsersController {
     return this.usersService.setCommission(id, dto);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.AGENT)
   @Post(':id/targets')
-  setTarget(@Param('id') id: string, @Body() dto: SetTargetDto) {
+  setTarget(
+    @Param('id') id: string,
+    @Body() dto: SetTargetDto,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    if (user.role !== Role.ADMIN && user.userId !== id) {
+      throw new ForbiddenException('Nemáte přístup k cílům jiného obchodníka');
+    }
     return this.usersService.setTarget(id, dto);
   }
 
@@ -102,9 +109,16 @@ export class UsersController {
     return this.usersService.getTargets(id);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.AGENT)
   @Delete(':id/targets/:targetId')
-  deleteTarget(@Param('id') id: string, @Param('targetId') targetId: string) {
+  deleteTarget(
+    @Param('id') id: string,
+    @Param('targetId') targetId: string,
+    @CurrentUser() user: CurrentUserPayload,
+  ) {
+    if (user.role !== Role.ADMIN && user.userId !== id) {
+      throw new ForbiddenException('Nemáte přístup k cílům jiného obchodníka');
+    }
     return this.usersService.deleteTarget(id, targetId);
   }
 }

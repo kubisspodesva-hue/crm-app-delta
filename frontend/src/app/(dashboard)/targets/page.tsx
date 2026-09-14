@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { StatCard } from '@/components/StatCard';
+import { TargetsModal } from '@/components/TargetsModal';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { User } from '@/types';
@@ -40,12 +41,13 @@ export default function TargetsPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
   const [progress, setProgress] = useState<Progress[]>([]);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
+  const [showTargetsModal, setShowTargetsModal] = useState(false);
 
-  useEffect(() => {
+  const loadAgents = useCallback(() => {
     if (user?.role === 'ADMIN') {
       api.get<User[]>('/users?role=AGENT').then((data) => {
         setAgents(data);
-        if (data.length > 0) setSelectedAgentId(data[0].id);
+        setSelectedAgentId((prev) => prev || (data.length > 0 ? data[0].id : ''));
       });
     } else if (user) {
       setSelectedAgentId(user.id);
@@ -53,6 +55,11 @@ export default function TargetsPage() {
   }, [user]);
 
   useEffect(() => {
+    loadAgents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const loadProgress = useCallback(() => {
     if (!selectedAgentId) return;
     const isMe = selectedAgentId === user?.id;
     const progressPath = isMe ? '/targets/me/progress' : `/targets/${selectedAgentId}/progress`;
@@ -61,23 +68,44 @@ export default function TargetsPage() {
     api.get<Prediction>(predictionPath).then(setPrediction).catch(() => setPrediction(null));
   }, [selectedAgentId, user]);
 
+  useEffect(() => {
+    loadProgress();
+  }, [loadProgress]);
+
+  // Obchodník vidí a upravuje jen svoje vlastní cíle (selectedAgentId je pro
+  // něj vždy jeho vlastní id - viz loadAgents výše), admin může kohokoliv -
+  // stejné omezení vynucuje i backend (viz UsersController targets endpointy).
+  const selectedAgent: User | null =
+    user?.role === 'ADMIN'
+      ? agents.find((a) => a.id === selectedAgentId) ?? null
+      : selectedAgentId === user?.id
+        ? user
+        : null;
+
   return (
     <div>
       <Header title="Cíle a predikce" />
       <div className="p-4 md:p-6 space-y-6">
-        {user?.role === 'ADMIN' && (
-          <select
-            className="input max-w-xs"
-            value={selectedAgentId}
-            onChange={(e) => setSelectedAgentId(e.target.value)}
-          >
-            {agents.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.firstName} {a.lastName}
-              </option>
-            ))}
-          </select>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {user?.role === 'ADMIN' && (
+            <select
+              className="input max-w-xs"
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
+            >
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.firstName} {a.lastName}
+                </option>
+              ))}
+            </select>
+          )}
+          {selectedAgent && (
+            <button className="btn-secondary" onClick={() => setShowTargetsModal(true)}>
+              ✏️ Upravit cíle
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {progress.map((p) => (
@@ -128,6 +156,17 @@ export default function TargetsPage() {
           )}
         </div>
       </div>
+
+      {showTargetsModal && selectedAgent && (
+        <TargetsModal
+          agent={selectedAgent}
+          onClose={() => setShowTargetsModal(false)}
+          onSaved={() => {
+            loadAgents();
+            loadProgress();
+          }}
+        />
+      )}
     </div>
   );
 }
