@@ -33,12 +33,12 @@ export function LeadStatusSelect({
       onChange={(e) => onChange(e.target.value as LeadStatus)}
     >
       {isDeprecatedValue && (
-        <option value={status} className="bg-surface-card text-white">
+        <option value={status} className="bg-surface-card text-ink">
           {LeadStatusLabels[status]}
         </option>
       )}
       {LEAD_STATUS_PIPELINE.map((value) => (
-        <option key={value} value={value} className="bg-surface-card text-white">
+        <option key={value} value={value} className="bg-surface-card text-ink">
           {LeadStatusLabels[value]}
         </option>
       ))}

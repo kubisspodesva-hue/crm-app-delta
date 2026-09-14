@@ -111,7 +111,7 @@ export function GlobalSearch() {
     <div className="relative" ref={boxRef}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="text-slate-300 hover:text-white text-lg leading-none px-1.5 py-1"
+        className="text-slate-300 hover:text-ink text-lg leading-none px-1.5 py-1"
         aria-label="Hledat kontakt"
         title="Hledat kontakt — jméno, telefon, email nebo firma (zkratka: /)"
       >
@@ -128,7 +128,7 @@ export function GlobalSearch() {
               if (e.key === 'Enter' && total > 0) goToFullList();
             }}
             placeholder="Jméno, telefon, email, firma…"
-            className="w-full bg-surface-card text-white placeholder:text-muted px-4 py-3 text-sm focus:outline-none border-b border-hairline"
+            className="w-full bg-surface-card text-ink placeholder:text-muted px-4 py-3 text-sm focus:outline-none border-b border-hairline"
           />
           <div className="max-h-80 overflow-auto">
             {loading && <p className="px-4 py-3 text-sm text-muted">Hledám…</p>}
@@ -142,7 +142,7 @@ export function GlobalSearch() {
                   onClick={() => goToLead(lead.id)}
                   className="w-full text-left px-4 py-2.5 hover:bg-surface-elevated border-b border-hairline last:border-0 transition-colors"
                 >
-                  <div className="text-sm font-medium text-white truncate">
+                  <div className="text-sm font-medium text-ink truncate">
                     {lead.firstName} {lead.lastName}
                   </div>
                   <div className="text-xs text-muted truncate">

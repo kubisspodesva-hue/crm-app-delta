@@ -2,13 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design tokeny appky jako CSS proměnné (formát "R G B" pro rgb(var(...) / <alpha-value>)
+   v tailwind.config.ts, aby fungovaly i opacity modifikátory jako bg-slate-800/60).
+   Tmavé téma je výchozí (žádný data-theme atribut = tmavá appka jako dřív),
+   světlé téma se zapíná atributem data-theme="light" na <html> - viz ThemeProvider. */
+:root,
+[data-theme='dark'] {
+  --color-brand-50: 16 28 43;
+  --color-brand-100: 19 34 54;
+  --color-brand-500: 59 130 246;
+  --color-brand-600: 37 99 235;
+  --color-brand-700: 29 78 216;
+
+  --color-slate-50: 10 10 11;
+  --color-slate-100: 17 18 20;
+  --color-slate-200: 42 44 48;
+  --color-slate-300: 53 55 60;
+  --color-slate-400: 107 114 128;
+  --color-slate-500: 139 143 152;
+  --color-slate-600: 183 186 193;
+  --color-slate-700: 209 211 216;
+  --color-slate-800: 229 231 235;
+  --color-slate-900: 245 245 246;
+
+  --color-canvas: 10 10 11;
+  --color-surface-soft: 17 18 20;
+  --color-surface-card: 23 24 28;
+  --color-surface-elevated: 32 34 38;
+  --color-hairline: 42 44 48;
+  --color-hairline-strong: 53 55 60;
+  --color-ink: 255 255 255;
+  --color-muted: 107 114 128;
+  --color-accent-blue: 37 99 235;
+  --color-accent-violet: 124 58 237;
+  --color-accent-rose: 244 63 94;
+}
+
+[data-theme='light'] {
+  --color-brand-50: 239 246 255;
+  --color-brand-100: 219 234 254;
+  --color-brand-500: 59 130 246;
+  --color-brand-600: 37 99 235;
+  --color-brand-700: 29 78 216;
+
+  --color-slate-50: 248 250 252;
+  --color-slate-100: 241 245 249;
+  --color-slate-200: 226 232 240;
+  --color-slate-300: 203 213 225;
+  --color-slate-400: 148 163 184;
+  --color-slate-500: 100 116 139;
+  --color-slate-600: 71 85 105;
+  --color-slate-700: 51 65 85;
+  --color-slate-800: 30 41 59;
+  --color-slate-900: 15 23 42;
+
+  --color-canvas: 255 255 255;
+  --color-surface-soft: 248 250 252;
+  --color-surface-card: 255 255 255;
+  --color-surface-elevated: 241 245 249;
+  --color-hairline: 226 232 240;
+  --color-hairline-strong: 203 213 225;
+  --color-ink: 15 23 42;
+  --color-muted: 100 116 139;
+  --color-accent-blue: 37 99 235;
+  --color-accent-violet: 124 58 237;
+  --color-accent-rose: 225 29 72;
+}
+
 html, body {
   height: 100%;
 }
 
 body {
-  background-color: #0a0a0b;
-  color: #ffffff;
+  background-color: rgb(var(--color-canvas));
+  color: rgb(var(--color-ink));
 }
 
 @layer components {
@@ -19,13 +86,13 @@ body {
     @apply inline-flex items-center justify-center rounded-none bg-brand-600 px-4 py-2 text-sm font-semibold tracking-wide text-white hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-none bg-surface-card border border-hairline-strong px-4 py-2 text-sm font-semibold tracking-wide text-white hover:bg-surface-elevated transition-colors disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-none bg-surface-card border border-hairline-strong px-4 py-2 text-sm font-semibold tracking-wide text-ink hover:bg-surface-elevated transition-colors disabled:opacity-50;
   }
   .btn-danger {
     @apply inline-flex items-center justify-center rounded-none bg-red-600 px-4 py-2 text-sm font-semibold tracking-wide text-white hover:bg-red-700 transition-colors disabled:opacity-50;
   }
   .input {
-    @apply w-full rounded-none border border-hairline bg-surface-card text-white placeholder:text-muted px-3 py-2 text-sm focus:outline-none focus:border-brand-500 transition-colors;
+    @apply w-full rounded-none border border-hairline bg-surface-card text-ink placeholder:text-muted px-3 py-2 text-sm focus:outline-none focus:border-brand-500 transition-colors;
   }
   .label {
     @apply block text-xs font-semibold uppercase tracking-wide text-muted mb-1;

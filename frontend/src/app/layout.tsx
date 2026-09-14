@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/lib/auth-context';
+import { ThemeProvider } from '@/lib/theme-context';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
 
@@ -38,7 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="cs">
       <body>
         <ServiceWorkerRegistration />
-        <AuthProvider>{children}</AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

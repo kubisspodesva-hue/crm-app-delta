@@ -68,11 +68,11 @@ export function Sidebar() {
               <div className="h-8 w-8 rounded-none bg-brand-600 text-white flex items-center justify-center font-bold mr-2">
                 D
               </div>
-              <span className="font-semibold text-white tracking-tight">CRM Delta</span>
+              <span className="font-semibold text-ink tracking-tight">CRM Delta</span>
             </div>
             <button
               onClick={close}
-              className="md:hidden text-slate-400 hover:text-white text-xl leading-none px-2"
+              className="md:hidden text-slate-400 hover:text-ink text-xl leading-none px-2"
               aria-label="Zavřít menu"
             >
               ✕
@@ -92,8 +92,8 @@ export function Sidebar() {
                 className={clsx(
                   'flex items-center gap-3 rounded-none border-l-2 px-3 py-2.5 text-[13px] font-medium tracking-wide transition-colors',
                   active
-                    ? 'border-brand-500 bg-surface-elevated text-white'
-                    : 'border-transparent text-slate-600 hover:bg-surface-elevated hover:text-white',
+                    ? 'border-brand-500 bg-surface-elevated text-ink'
+                    : 'border-transparent text-slate-600 hover:bg-surface-elevated hover:text-ink',
                 )}
               >
                 <span>{link.icon}</span>
@@ -105,7 +105,7 @@ export function Sidebar() {
 
         {user && (
           <div className="p-4 border-t border-hairline text-sm">
-            <p className="font-semibold text-white">
+            <p className="font-semibold text-ink">
               {user.firstName} {user.lastName}
             </p>
             <p className="text-xs uppercase tracking-wide text-muted mt-0.5">

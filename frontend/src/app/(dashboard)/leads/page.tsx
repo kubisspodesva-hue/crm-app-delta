@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
+import { KanbanBoard } from '@/components/KanbanBoard';
 import { LeadStatusSelect } from '@/components/LeadStatusSelect';
 import { NextActionCell } from '@/components/NextActionCell';
 import { CreateLeadModal } from '@/components/CreateLeadModal';
@@ -43,6 +44,7 @@ export default function LeadsPage() {
   const [bookerLead, setBookerLead] = useState<Lead | null>(null);
   const [soldLeadId, setSoldLeadId] = useState<string | null>(null);
   const [dueTodayOnly, setDueTodayOnly] = useState(false);
+  const [view, setView] = useState<'table' | 'kanban'>('table');
   const isAdmin = user?.role === 'ADMIN';
   const OWNER_EMAIL = 'admin@crm.cz';
   const canDelete = user?.email === OWNER_EMAIL;
@@ -94,13 +96,15 @@ export default function LeadsPage() {
   async function load() {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
-    // "Dnes k vyřízení" je klientský filtr napříč více leady, než kolik jich
-    // je na jedné stránce - dočasně ignoruje stav-filtr a stáhne víc řádků
-    // najednou, ať filtr má z čeho vybírat.
-    if (!dueTodayOnly && status) params.set('status', status);
+    // "Dnes k vyřízení" a kanban zobrazení jsou klientské filtry/rozdělení napříč
+    // více leady, než kolik jich je na jedné stránce - dočasně ignorují
+    // stav-filtr a stáhnou víc řádků najednou (kanban je potřebuje všechny
+    // najednou, ať má z čeho postavit sloupce).
+    const bigFetch = dueTodayOnly || view === 'kanban';
+    if (!bigFetch && status) params.set('status', status);
     if (agentId) params.set('agentId', agentId);
-    params.set('page', String(dueTodayOnly ? 1 : page));
-    params.set('pageSize', dueTodayOnly ? '200' : '20');
+    params.set('page', String(bigFetch ? 1 : page));
+    params.set('pageSize', bigFetch ? '200' : '20');
 
     const res = await api.get<LeadsResponse>(`/leads?${params.toString()}`);
     setData(res);
@@ -205,7 +209,7 @@ export default function LeadsPage() {
     setSelected(new Set());
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status, agentId, page, dueTodayOnly]);
+  }, [search, status, agentId, page, dueTodayOnly, view]);
 
   const visibleItems = dueTodayOnly
     ? (data?.items ?? []).filter(isActionDueTodayOrOverdue)
@@ -231,41 +235,63 @@ export default function LeadsPage() {
               setSearch(e.target.value);
             }}
           />
-          <select
-            className="input max-w-[180px]"
-            value={status}
-            disabled={dueTodayOnly}
-            onChange={(e) => {
-              setPage(1);
-              setStatus(e.target.value);
-            }}
-          >
-            <option value="">Všechny stavy</option>
-            {LEAD_STATUS_PIPELINE.map((v) => (
-              <option key={v} value={v}>
-                {LeadStatusLabels[v]}
-              </option>
-            ))}
-          </select>
-          <button
-            className={status === 'WON' && !dueTodayOnly ? 'btn-primary' : 'btn-secondary'}
-            disabled={dueTodayOnly}
-            onClick={() => {
-              setPage(1);
-              setStatus((s) => (s === 'WON' ? '' : 'WON'));
-            }}
-          >
-            🏆 Jen prodané
-          </button>
-          <button
-            className={dueTodayOnly ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => {
-              setPage(1);
-              setDueTodayOnly((v) => !v);
-            }}
-          >
-            🔥 Dnes k vyřízení
-          </button>
+          <div className="flex border border-hairline-strong overflow-hidden">
+            <button
+              className={`px-3 py-2 text-sm font-semibold tracking-wide transition-colors ${
+                view === 'table' ? 'bg-brand-600 text-white' : 'bg-surface-card text-ink hover:bg-surface-elevated'
+              }`}
+              onClick={() => setView('table')}
+            >
+              📋 Tabulka
+            </button>
+            <button
+              className={`px-3 py-2 text-sm font-semibold tracking-wide transition-colors ${
+                view === 'kanban' ? 'bg-brand-600 text-white' : 'bg-surface-card text-ink hover:bg-surface-elevated'
+              }`}
+              onClick={() => setView('kanban')}
+            >
+              🗂️ Kanban
+            </button>
+          </div>
+          {view === 'table' && (
+            <>
+              <select
+                className="input max-w-[180px]"
+                value={status}
+                disabled={dueTodayOnly}
+                onChange={(e) => {
+                  setPage(1);
+                  setStatus(e.target.value);
+                }}
+              >
+                <option value="">Všechny stavy</option>
+                {LEAD_STATUS_PIPELINE.map((v) => (
+                  <option key={v} value={v}>
+                    {LeadStatusLabels[v]}
+                  </option>
+                ))}
+              </select>
+              <button
+                className={status === 'WON' && !dueTodayOnly ? 'btn-primary' : 'btn-secondary'}
+                disabled={dueTodayOnly}
+                onClick={() => {
+                  setPage(1);
+                  setStatus((s) => (s === 'WON' ? '' : 'WON'));
+                }}
+              >
+                🏆 Jen prodané
+              </button>
+              <button
+                className={dueTodayOnly ? 'btn-primary' : 'btn-secondary'}
+                onClick={() => {
+                  setPage(1);
+                  setDueTodayOnly((v) => !v);
+                }}
+              >
+                🔥 Dnes k vyřízení
+              </button>
+            </>
+          )}
           {user?.role === 'ADMIN' && (
             <select
               className="input max-w-[180px]"
@@ -339,12 +365,18 @@ export default function LeadsPage() {
           </div>
         )}
 
-        {data && !dueTodayOnly && (
+        {view === 'kanban' && (
+          <p className="text-sm text-muted">
+            Kanban zobrazuje leady napříč zjednodušeným pipeline. Karty přetáhni do jiného sloupce pro
+            změnu stavu.
+          </p>
+        )}
+        {data && !dueTodayOnly && view === 'table' && (
           <p className="text-sm text-slate-500">
             Celkem leadů: <strong className="text-slate-700">{data.total}</strong>
           </p>
         )}
-        {dueTodayOnly && (
+        {dueTodayOnly && view === 'table' && (
           <p className="text-sm text-slate-500">
             🔥 K vyřízení: <strong className="text-slate-700">{visibleItems.length}</strong>
             {data && data.total > data.items.length && (
@@ -353,6 +385,11 @@ export default function LeadsPage() {
           </p>
         )}
 
+        {view === 'kanban' && (
+          <KanbanBoard leads={data?.items ?? []} onStatusChange={handleStatusChange} />
+        )}
+
+        {view === 'table' && (
         <div className="card overflow-auto max-h-[65vh]">
           <table className="w-full min-w-[720px] text-sm border-separate border-spacing-0">
             <thead className="text-slate-500 text-xs uppercase">
@@ -485,8 +522,9 @@ export default function LeadsPage() {
             </tbody>
           </table>
         </div>
+        )}
 
-        {data && !dueTodayOnly && data.totalPages > 1 && (
+        {view === 'table' && data && !dueTodayOnly && data.totalPages > 1 && (
           <div className="flex items-center justify-between text-sm text-slate-500">
             <span>
               Stránka {data.page} z {data.totalPages} ({data.total} leadů)
