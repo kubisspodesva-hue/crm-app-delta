@@ -5,6 +5,21 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 let accessToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
 
+// Render free tier (a Neon databáze) po nečinnosti "usnou" a probuzení může
+// trvat desítky sekund - ale bez časového limitu by `fetch` čekal na odpověď
+// klidně navěky, kdyby server vůbec neodpověděl (výpadek, zaseknuté probouzení).
+// Appka by pak zůstala trčet na "Načítání…" bez chyby i po hodinách - viz
+// DashboardLayout, který loading stav appky drží dokud refreshAccessToken
+// nedoběhne. AbortController po timeoutu request zruší, takže se aspoň
+// zobrazí chyba / přihlašovací stránka místo věčného točítka.
+const FETCH_TIMEOUT_MS = 30000;
+
+function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 export function setAccessToken(token: string | null) {
   accessToken = token;
 }
@@ -18,7 +33,7 @@ async function refreshAccessToken(): Promise<string | null> {
 
   refreshPromise = (async () => {
     try {
-      const res = await fetch(`${API_URL}/auth/refresh`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -58,7 +73,7 @@ export async function apiFetch<T = any>(path: string, options: RequestOptions = 
   const { method = 'GET', body, skipAuthRetry } = options;
 
   const doFetch = async (): Promise<Response> =>
-    fetch(`${API_URL}${path}`, {
+    fetchWithTimeout(`${API_URL}${path}`, {
       method,
       credentials: 'include',
       headers: {
