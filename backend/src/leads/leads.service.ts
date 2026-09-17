@@ -33,6 +33,9 @@ const LEAD_INCLUDE = {
   assignedAgent: {
     select: { id: true, firstName: true, lastName: true, email: true },
   },
+  createdBy: {
+    select: { id: true, firstName: true, lastName: true },
+  },
   meetings: { orderBy: { startTime: 'desc' as const } },
   history: {
     orderBy: { createdAt: 'desc' as const },
@@ -80,6 +83,7 @@ export class LeadsService {
           // "Obchodník" filtr na /leads stejně jako u ostatních obchodníků,
           // isPrivate ho pořád skryje před kýmkoliv jiným.
           assignedAgentId: actor.userId,
+          createdById: actor.userId,
           isPrivate: true,
         },
       });
@@ -116,6 +120,7 @@ export class LeadsService {
           notes: dto.notes,
           oldWebsiteUrl: dto.oldWebsiteUrl,
           assignedAgentId: dto.assignedAgentId,
+          createdById: actor.userId,
         },
       });
 
@@ -539,11 +544,17 @@ export class LeadsService {
   }
 
   async remove(id: string, actor: CurrentUserPayload) {
-    if (actor.email !== OWNER_EMAIL) {
-      throw new ForbiddenException('Mazání leadů je vyhrazeno pouze majiteli účtu');
-    }
     const lead = await this.prisma.lead.findUnique({ where: { id } });
     if (!lead) throw new NotFoundException('Lead nenalezen');
+
+    // Majitel účtu smí smazat kterýkoliv lead. Obchodník smí smazat jen lead,
+    // který sám vytvořil (createdById) - ne ten, co mu jen admin přiřadil
+    // (assignedAgentId), ani leady jiných obchodníků.
+    const isOwnCreatedLead = actor.role === Role.AGENT && lead.createdById === actor.userId;
+    if (actor.email !== OWNER_EMAIL && !isOwnCreatedLead) {
+      throw new ForbiddenException('Nemáte oprávnění smazat tento lead');
+    }
+
     await this.prisma.lead.delete({ where: { id } });
     return { success: true };
   }

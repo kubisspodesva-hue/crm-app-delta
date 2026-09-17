@@ -123,6 +123,7 @@ export interface Lead {
   soldAt?: string | null;
   rejectedAt?: string | null;
   assignedAgent?: { id: string; firstName: string; lastName: string; email?: string };
+  createdBy?: { id: string; firstName: string; lastName: string } | null;
   meetings?: Meeting[];
   history?: LeadHistoryItem[];
 }

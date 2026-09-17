@@ -14,6 +14,8 @@ import { useAuth } from '@/lib/auth-context';
 import { Lead, LeadStatus, LeadStatusLabels, LEAD_STATUS_PIPELINE, User } from '@/types';
 import { computePriorityScore, getLastContactInfo, priorityColorClass } from '@/lib/lead-utils';
 
+const OWNER_EMAIL = 'admin@crm.cz';
+
 const HISTORY_ACTION_LABELS: Record<string, string> = {
   CREATED: 'Vytvořen',
   STATUS_CHANGED: 'Změna stavu',
@@ -38,6 +40,7 @@ export default function LeadDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [agents, setAgents] = useState<User[]>([]);
   const [reassigning, setReassigning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     try {
@@ -122,6 +125,23 @@ export default function LeadDetailPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!lead) return;
+    if (
+      !confirm(`Opravdu smazat lead ${lead.firstName} ${lead.lastName}? Tuto akci nelze vrátit zpět.`)
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.delete(`/leads/${lead.id}`);
+      router.push('/leads');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Lead se nepodařilo smazat');
+      setDeleting(false);
+    }
+  }
+
   if (!lead) {
     return (
       <div>
@@ -139,6 +159,13 @@ export default function LeadDetailPage() {
 
   const contactedToday =
     !!lead.lastContactedAt && new Date(lead.lastContactedAt).toDateString() === new Date().toDateString();
+
+  // Majitel účtu smí smazat kterýkoliv lead, obchodník jen ten, který sám
+  // vytvořil (ne ten, co mu jen admin přiřadil) - stejné pravidlo hlídá i
+  // backend (LeadsService.remove), tohle jen skrývá tlačítko těm, kdo by
+  // stejně dostali 403.
+  const canDelete =
+    user?.email === OWNER_EMAIL || (user?.role === 'AGENT' && lead.createdBy?.id === user?.id);
 
   return (
     <div>
@@ -171,12 +198,23 @@ export default function LeadDetailPage() {
                     <p className="text-xs text-violet-400 font-medium">Soukromý kontakt - vidíte jen vy</p>
                   )}
                   <p className="text-slate-500">{lead.company ?? 'Bez firmy'}</p>
-                  <button
-                    className="text-xs text-brand-500 hover:underline mt-1"
-                    onClick={() => setShowEdit(true)}
-                  >
-                    ✏️ Upravit údaje
-                  </button>
+                  <div className="flex items-center gap-3 mt-1">
+                    <button
+                      className="text-xs text-brand-500 hover:underline"
+                      onClick={() => setShowEdit(true)}
+                    >
+                      ✏️ Upravit údaje
+                    </button>
+                    {canDelete && (
+                      <button
+                        className="text-xs text-red-400 hover:underline disabled:opacity-50"
+                        disabled={deleting}
+                        onClick={handleDelete}
+                      >
+                        {deleting ? 'Mažu…' : '🗑️ Smazat lead'}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <LeadStatusBadge status={lead.status} />

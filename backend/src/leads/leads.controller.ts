@@ -136,7 +136,7 @@ export class LeadsController {
     return this.leadsService.reassignMany(dto.ids, dto.agentId, user);
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.AGENT)
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() user: CurrentUserPayload) {
     return this.leadsService.remove(id, user);

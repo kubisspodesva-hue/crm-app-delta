@@ -118,6 +118,7 @@ model User {
 
   // Vztahy
   assignedLeads   Lead[]            @relation("AssignedAgent")
+  createdLeads    Lead[]            @relation("CreatedByAgent")
   leadHistory     LeadHistory[]     @relation("HistoryActor")
   meetings        Meeting[]         @relation("AgentMeetings")
   notifications   Notification[]
@@ -185,6 +186,13 @@ model Lead {
 
   assignedAgentId  String?
   assignedAgent    User?      @relation("AssignedAgent", fields: [assignedAgentId], references: [id], onDelete: SetNull)
+
+  // Kdo lead skutečně založil (na rozdíl od assignedAgentId, což je komu je
+  // přiřazený - admin může lead založit a přiřadit ho jinému obchodníkovi).
+  // Používá se k oprávnění mazání - obchodník smí smazat jen leady, které
+  // sám vytvořil, ne ty, co mu jen admin přiřadil (viz LeadsService.remove).
+  createdById      String?
+  createdBy        User?      @relation("CreatedByAgent", fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt        DateTime   @default(now())
   lastContactedAt  DateTime?
