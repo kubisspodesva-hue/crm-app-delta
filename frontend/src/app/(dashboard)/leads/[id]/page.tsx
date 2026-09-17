@@ -8,6 +8,7 @@ import { LeadStatusBadge } from '@/components/LeadStatusBadge';
 import { NextActionCell } from '@/components/NextActionCell';
 import { MeetingBookerModal } from '@/components/MeetingBookerModal';
 import { SoldModal } from '@/components/SoldModal';
+import { EditLeadModal } from '@/components/EditLeadModal';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { Lead, LeadStatus, LeadStatusLabels, LEAD_STATUS_PIPELINE, User } from '@/types';
@@ -33,6 +34,7 @@ export default function LeadDetailPage() {
   const [savingNote, setSavingNote] = useState(false);
   const [showBooker, setShowBooker] = useState(false);
   const [showSold, setShowSold] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agents, setAgents] = useState<User[]>([]);
   const [reassigning, setReassigning] = useState(false);
@@ -169,6 +171,12 @@ export default function LeadDetailPage() {
                     <p className="text-xs text-violet-400 font-medium">Soukromý kontakt - vidíte jen vy</p>
                   )}
                   <p className="text-slate-500">{lead.company ?? 'Bez firmy'}</p>
+                  <button
+                    className="text-xs text-brand-500 hover:underline mt-1"
+                    onClick={() => setShowEdit(true)}
+                  >
+                    ✏️ Upravit údaje
+                  </button>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <LeadStatusBadge status={lead.status} />
@@ -379,6 +387,9 @@ export default function LeadDetailPage() {
       )}
       {showSold && (
         <SoldModal leadId={lead.id} onClose={() => setShowSold(false)} onDone={load} />
+      )}
+      {showEdit && (
+        <EditLeadModal lead={lead} onClose={() => setShowEdit(false)} onSaved={load} />
       )}
     </div>
   );
