@@ -5,7 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto, SetCommissionDto, SetTargetDto, UpdateUserDto } from './dto';
+import {
+  CreateUserDto,
+  ResetPasswordDto,
+  SetCommissionDto,
+  SetTargetDto,
+  UpdateUserDto,
+} from './dto';
 import { AuthService } from '../auth/auth.service';
 import { Role } from '../common/enums';
 import { OWNER_EMAIL } from '../common/constants';
@@ -75,6 +81,16 @@ export class UsersService {
       data: dto,
       select: AGENT_SELECT,
     });
+  }
+
+  // Heslo je uložené jen jako jednosměrný hash - nejde zjistit zpětně, jediná
+  // možnost při zapomenutí je nastavit nové (admin za obchodníka, nebo časem
+  // vlastní "zapomenuté heslo" flow).
+  async resetPassword(id: string, dto: ResetPasswordDto) {
+    await this.findOne(id);
+    const passwordHash = await AuthService.hashPassword(dto.newPassword);
+    await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+    return { success: true };
   }
 
   async setActive(id: string, isActive: boolean) {

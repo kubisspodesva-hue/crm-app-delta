@@ -18,6 +18,7 @@ import { Role } from '../common/enums';
 import { UsersService } from './users.service';
 import {
   CreateUserDto,
+  ResetPasswordDto,
   SetCommissionDto,
   SetTargetDto,
   UpdateUserDto,
@@ -59,6 +60,12 @@ export class UsersController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
+  }
+
+  @Roles(Role.ADMIN)
+  @Patch(':id/reset-password')
+  resetPassword(@Param('id') id: string, @Body() dto: ResetPasswordDto) {
+    return this.usersService.resetPassword(id, dto);
   }
 
   @Roles(Role.ADMIN)

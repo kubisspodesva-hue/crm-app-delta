@@ -5,6 +5,7 @@ import { Header } from '@/components/Header';
 import { CreateAgentModal } from '@/components/CreateAgentModal';
 import { CommissionModal } from '@/components/CommissionModal';
 import { TargetsModal } from '@/components/TargetsModal';
+import { ResetPasswordModal } from '@/components/ResetPasswordModal';
 import { api, ApiError } from '@/lib/api';
 import { User } from '@/types';
 import { useAuth } from '@/lib/auth-context';
@@ -19,6 +20,7 @@ export default function AgentsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [commissionAgent, setCommissionAgent] = useState<User | null>(null);
   const [targetsAgent, setTargetsAgent] = useState<User | null>(null);
+  const [resetPasswordAgent, setResetPasswordAgent] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
@@ -124,6 +126,9 @@ export default function AgentsPage() {
                       <button className="btn-secondary" onClick={() => toggleActive(agent)}>
                         {agent.isActive ? 'Deaktivovat' : 'Aktivovat'}
                       </button>
+                      <button className="btn-secondary" onClick={() => setResetPasswordAgent(agent)}>
+                        🔑 Reset hesla
+                      </button>
                       {isOwner && (
                         <button className="btn-danger" onClick={() => removeAgent(agent)}>
                           Smazat
@@ -155,6 +160,13 @@ export default function AgentsPage() {
       )}
       {targetsAgent && (
         <TargetsModal agent={targetsAgent} onClose={() => setTargetsAgent(null)} onSaved={load} />
+      )}
+      {resetPasswordAgent && (
+        <ResetPasswordModal
+          agent={resetPasswordAgent}
+          onClose={() => setResetPasswordAgent(null)}
+          onSaved={load}
+        />
       )}
     </div>
   );
