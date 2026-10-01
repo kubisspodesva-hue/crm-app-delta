@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { api, ApiError } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 
 interface CalendarStatus {
   connected: boolean;
@@ -13,12 +14,40 @@ interface CalendarStatus {
 }
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const [status, setStatus] = useState<CalendarStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [hours, setHours] = useState({ workingHourStart: 8, workingHourEnd: 18, slotDurationMin: 30 });
   const [savingHours, setSavingHours] = useState(false);
   const [hoursSaved, setHoursSaved] = useState(false);
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [nameSaved, setNameSaved] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName);
+      setLastName(user.lastName);
+    }
+  }, [user]);
+
+  async function saveName() {
+    if (!user) return;
+    setSavingName(true);
+    setError(null);
+    setNameSaved(false);
+    try {
+      await api.patch(`/users/${user.id}`, { firstName, lastName });
+      setNameSaved(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Jméno se nepodařilo uložit');
+    } finally {
+      setSavingName(false);
+    }
+  }
 
   async function load() {
     try {
@@ -78,6 +107,55 @@ export default function SettingsPage() {
             {error}
           </div>
         )}
+
+        <div className="card p-6 space-y-4">
+          <div>
+            <h2 className="font-semibold text-slate-900">Moje jméno</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Jméno se zobrazuje v menu a u leadů, které ti budou přiřazené.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Jméno</label>
+              <input
+                className="input"
+                value={firstName}
+                onChange={(e) => {
+                  setFirstName(e.target.value);
+                  setNameSaved(false);
+                }}
+              />
+            </div>
+            <div>
+              <label className="label">Příjmení</label>
+              <input
+                className="input"
+                value={lastName}
+                onChange={(e) => {
+                  setLastName(e.target.value);
+                  setNameSaved(false);
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              className="btn-primary text-sm"
+              onClick={saveName}
+              disabled={savingName || !firstName || !lastName}
+            >
+              {savingName ? 'Ukládám…' : 'Uložit jméno'}
+            </button>
+            {nameSaved && (
+              <span className="text-sm text-emerald-600">
+                Uloženo - obnov stránku (F5), ať se projeví všude
+              </span>
+            )}
+          </div>
+        </div>
 
         <div className="card p-6 space-y-4">
           <div>
