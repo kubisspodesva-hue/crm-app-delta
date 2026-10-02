@@ -22,6 +22,7 @@ const ADMIN_LINKS = [
   { href: '/leaderboard', label: 'Žebříček', icon: '🏆' },
   { href: '/performance', label: 'Výkon týmu', icon: '📈' },
   { href: '/agents', label: 'Obchodníci', icon: '👥' },
+  { href: '/admins', label: 'Administrátoři', icon: '🛡️' },
   { href: '/targets', label: 'Cíle a predikce', icon: '🎯' },
   { href: '/commissions', label: 'Provize', icon: '💰' },
   { href: '/settings', label: 'Nastavení', icon: '⚙️' },
