@@ -9,6 +9,7 @@ import { NextActionCell } from '@/components/NextActionCell';
 import { MeetingBookerModal } from '@/components/MeetingBookerModal';
 import { SoldModal } from '@/components/SoldModal';
 import { EditLeadModal } from '@/components/EditLeadModal';
+import { CallScriptCard } from '@/components/CallScriptCard';
 import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { Lead, LeadStatus, LeadStatusLabels, LEAD_STATUS_PIPELINE, User } from '@/types';
@@ -346,6 +347,12 @@ export default function LeadDetailPage() {
                 </select>
               </div>
             </div>
+
+            <CallScriptCard
+              onInsertTemplate={(template) =>
+                setNote((prev) => (prev ? `${prev}\n\n${template}` : template))
+              }
+            />
 
             <div className="card p-5">
               <h3 className="font-semibold text-slate-800 mb-3">Interní poznámky (jen pro obchodníky)</h3>
