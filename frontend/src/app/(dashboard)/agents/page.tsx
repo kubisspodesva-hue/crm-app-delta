@@ -45,6 +45,21 @@ export default function AgentsPage() {
     }
   }
 
+  async function makeAdmin(agent: User) {
+    if (
+      !confirm(
+        `Opravdu nastavit ${agent.firstName} ${agent.lastName} jako admina? Získá přístup ke správě obchodníků a uvidí všechny leady. Zároveň zmizí z tohoto seznamu (ten zobrazuje jen obchodníky) a z nabídky "přiřadit obchodníkovi" u nových leadů - leady, co už má přiřazené, mu zůstanou.`,
+      )
+    )
+      return;
+    try {
+      await api.patch(`/users/${agent.id}`, { role: 'ADMIN' });
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Roli se nepodařilo změnit');
+    }
+  }
+
   async function removeAgent(agent: User) {
     if (
       !confirm(
@@ -129,6 +144,11 @@ export default function AgentsPage() {
                       <button className="btn-secondary" onClick={() => setResetPasswordAgent(agent)}>
                         🔑 Reset hesla
                       </button>
+                      {isOwner && (
+                        <button className="btn-secondary" onClick={() => makeAdmin(agent)}>
+                          Nastavit jako admin
+                        </button>
+                      )}
                       {isOwner && (
                         <button className="btn-danger" onClick={() => removeAgent(agent)}>
                           Smazat
