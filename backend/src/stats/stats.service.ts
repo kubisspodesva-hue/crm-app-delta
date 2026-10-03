@@ -145,7 +145,10 @@ export class StatsService {
       }),
       this.prisma.lead.count({ where: { status: { in: WON_STATUSES } } }),
       this.prisma.lead.count({ where: { status: { in: ACTIVE_STATUSES } } }),
-      this.prisma.user.findMany({ where: { role: Role.AGENT, isActive: true } }),
+      // Role.ADMIN je zahrnuta záměrně - admin (např. majitel účtu) může mít
+      // taky přiřazené leady a chce vidět svůj výkon vedle obchodníků, ne jen
+      // mimo tabulku jako "jen admin".
+      this.prisma.user.findMany({ where: { role: { in: [Role.AGENT, Role.ADMIN] }, isActive: true } }),
     ]);
 
     const performance = await Promise.all(agents.map((a) => this.getAgentStats(a.id)));
@@ -197,7 +200,9 @@ export class StatsService {
     if (actor.role !== Role.ADMIN) {
       throw new ForbiddenException('Pouze administrátor má přístup k přehledu výkonu');
     }
-    const agents = await this.prisma.user.findMany({ where: { role: Role.AGENT } });
+    const agents = await this.prisma.user.findMany({
+      where: { role: { in: [Role.AGENT, Role.ADMIN] } },
+    });
     const rows = await Promise.all(
       agents.map(async (a) => ({
         ...(await this.getAgentStats(a.id)),
@@ -215,7 +220,7 @@ export class StatsService {
    */
   async getLeaderboard() {
     const agents = await this.prisma.user.findMany({
-      where: { role: Role.AGENT, isActive: true },
+      where: { role: { in: [Role.AGENT, Role.ADMIN] }, isActive: true },
     });
     const rows = await Promise.all(
       agents.map(async (a) => {
